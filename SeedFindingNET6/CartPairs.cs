@@ -15,6 +15,7 @@ namespace SeedFindingNET6
         //public readonly Dictionary<string, bool> Data;
         public readonly Dictionary<string, HashSet<int>> GardenItemsByPair;
         public CompressedTravelingCart Cart = new();
+        public BitEncoder BaseEncoder;
         public CartPairs()
         {
             Offsets = new()
@@ -78,6 +79,7 @@ namespace SeedFindingNET6
                 { "SuFa",new HashSet<int>{591,593,595,597}},
                 { "FaFa",new HashSet<int> { 591,593,597}}
             };
+            BaseEncoder = new BitEncoder(DataOrder, 0);
         }
         public Dictionary<int,int> GetCartStock(int seed)
         {
@@ -165,8 +167,10 @@ namespace SeedFindingNET6
         }
         public long EvaluatePair(int seed, int offset, Dictionary<int, int> BaseCartStock, bool FodderBundle, bool HasCarolineGift, HashSet<int> DemGiftItems)
         {
-            var LogicData = new BitEncoder(DataOrder, 0);
+            var LogicData = BaseEncoder.Copy();
+            //var LogicData = new BitEncoder(DataOrder, 0);
             var CartStock = Utility.DictSum(BaseCartStock, GetCartStock(seed + offset));
+
             var CartItems = new HashSet<int>(CartStock.Keys);
             HashSet<string> ForcedSeasons = new();
             //WiForage with early exit check
@@ -175,7 +179,7 @@ namespace SeedFindingNET6
                 "SpSp","SpSu","SpFa","SuFa","FaFa"
             }; //lists all possible days
 
-            ForageLogic("WiForage", CartItems,PossibleDays, LogicData, out LogicData, out PossibleDays); //zero logicData if fail, check and exit
+            ForageLogic("WiForage", CartItems, PossibleDays, LogicData, out LogicData, out PossibleDays); //zero logicData if fail, check and exit
             if (PossibleDays.Count == 0) return 0;
             
             //crops with early exit logic
