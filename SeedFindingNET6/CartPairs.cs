@@ -14,40 +14,40 @@ namespace SeedFindingNET6
         public readonly List<string> DataOrder;
         //public readonly Dictionary<string, bool> Data;
         public readonly Dictionary<string, HashSet<int>> GardenItemsByPair;
-        public TravelingCart Cart = new();
+        public CompressedTravelingCart Cart = new();
         public CartPairs()
         {
             Offsets = new()
             {
                 5,7,9,12,14,16,19,21,23,26,28,30,33,35,37,40,42,44,47,49,51,54,56,58,61,63,65,68,70,72,75,77,79
             };
-            ItemIdByBundle = new() //remove redundant ones after do code
+            ItemIdByBundle = new() 
             {
                 //craft room
-                ["SpForage"] = { 16, 18, 20, 22, 399 }, //logic
-                ["SuForage"] = { 398, 402 },
-                ["FaForage"] = { 404, 408 }, //logic, handle independantly
-                ["WiForage"] = { 416, 418, 283 }, //logic
+                { "SpForage",new HashSet<int>{ 16, 18, 20, 22, 399 } }, //logic
+                { "SuForage",new HashSet<int>{ 398, 402 } },
+                { "FaForage",new HashSet<int>{ 404, 408 } }, //logic, handle independantly
+                { "WiForage",new HashSet<int>{ 416, 418, 283 } }, //logic
                 //pantry
-                ["SpCrops"] = { 190, 192, 24 }, //here for reference by logic 
-                ["SuCrops"] = { 254, 256, 258, 260 },
-                ["FaCrops"] = { 272, 276 },
+                { "SpCrops",new HashSet<int>{ 190, 192, 24 } }, //here for reference by logic 
+                { "SuCrops",new HashSet<int>{ 254, 256, 258, 260 } },
+                { "FaCrops",new HashSet<int>{ 272, 276 } },
 
-                ["Animal"] = { 442, 174, 182 }, //here for reference, logic(s), milk removed to handle seperately
-                ["Garden"] = { 591, 593, 595, 597, 421 },
+                { "Animal",new HashSet<int>{ 442, 174, 182 } }, //here for reference, logic(s), milk removed to handle seperately
+                { "Garden",new HashSet<int>{ 591, 593, 595, 597, 421 } },
                 //
-                ["Brewer"] = { 459, 303, 350, 614 }, //here for reference, logic(s)
+                { "Brewer",new HashSet<int>{ 459, 303, 350, 614 } }, //here for reference, logic(s)
                 //fish
-                ["TunaSturgeon"] = { 130, 698 },
-                ["WalleyeTiger"] = { 140, 699 },
+                { "TunaSturgeon",new HashSet<int>{ 130, 698 } },
+                { "WalleyeTiger", new HashSet<int>{ 140, 699 } },
                 //
-                ["MasterFish"] = { 800, 165 }, //here for reference, logic(s)
+                { "MasterFish",new HashSet<int>{ 800, 165 } }, //here for reference, logic(s)
                 
                 //bulliten board
-                ["Chef"] = { 430, 376, 259 },
-                ["Dye"] = { 284, 300, 268, 444, 90, 266 }, //here for reference
-                ["HomeCook"] = { 184, 186, 436, 438 }, //here for reference for fuzzy logic
-                ["DemGiftItems"] = { 128, 254 }
+                { "Chef",new HashSet<int>{ 430, 376, 259 } },
+                { "Dye",new HashSet<int>{ 284, 300, 268, 444, 90, 266 } }, //here for reference
+                { "HomeCook",new HashSet<int>{ 184, 186, 436, 438 } }, //here for reference for fuzzy logic
+                { "DemGiftItems",new HashSet<int>{ 128, 254 } }
             };
             DataOrder = new()
             {
@@ -59,7 +59,7 @@ namespace SeedFindingNET6
                 "Animal","Garden591","Garden593","Garden595","Garden597","Garden421",
                 "Brewer",
                 "SpSp","SpSu","SpFa","SuSu","FaFa",
-                "SandFish","PufferSand",
+                "SandFish","PufferSand","WoodSkip",
                 "Master","MasterSu",
                 "Engineer",
                 "Chef",
@@ -71,19 +71,19 @@ namespace SeedFindingNET6
             };
             GardenItemsByPair = new()
             {
-                ["SpSp"] = { 593, 595, 421 },
-                ["SpSu"] = { 591, 593, 595, 597, 421 },
-                ["SpFa"] = { 591, 593, 595, 597, 421 },
-                ["SuSu"] = {591,595,597},
-                ["SuFa"] = {591,593,595,597},
-                ["FaFa"] = {591,593,597}
+                { "SpSp",new HashSet<int> { 593, 595, 421 } },
+                { "SpSu",new HashSet<int>{ 591, 593, 595, 597, 421 } },
+                { "SpFa",new HashSet<int>{ 591, 593, 595, 597, 421 } },
+                { "SuSu",new HashSet<int>{591,595,597}},
+                { "SuFa",new HashSet<int>{591,593,595,597}},
+                { "FaFa",new HashSet<int> { 591,593,597}}
             };
         }
         public Dictionary<int,int> GetCartStock(int seed)
         {
-            var CartStock = Cart.GetStockCache(seed, 0);
-            var dictCart = CartStock.ToDictionary(item => item.Key,item => item.Value.Quantity);
-            return dictCart;
+            var Stock = Cart.GetStockCache(seed);
+            var CartStock = Stock.ToDictionary(item => item.GetId(),item => item.GetQuantity());
+            return CartStock;
         }
         public static int OffsetCase(int offset)
         {
@@ -103,12 +103,9 @@ namespace SeedFindingNET6
                 else PossibleDays.RemoveWhere(x => !x.Contains("Sp"));
                 return;
             }
-            if (ItemCount == 0)
-            {
-                foreach (var item in ItemIdByBundle[Bundle]) LogicData2.TrySetValue(string.Concat(Bundle, item.ToString()), true);
-                return;
-            }
-            foreach (var item in Items) LogicData2.TrySetValue(string.Concat(Bundle, item.ToString()), true);
+            //true if have that item 
+            var HaveItems = ItemIdByBundle[Bundle].Except(Items);
+            foreach (var item in HaveItems) LogicData2.TrySetValue(string.Concat(Bundle, item.ToString()), true);
             return;
         }
         public static void CropLogic(HashSet<string> Crops, int offset,HashSet<string> PossibleDaysOld, out HashSet<string> PossibleDays )
@@ -156,18 +153,13 @@ namespace SeedFindingNET6
             else PossibleDays.IntersectWith(new HashSet<string> { "FaFa" });
             return;
         }
-        public void GardenLogic(BitEncoder LogicData, HashSet<int> Garden,int AnimalItems, HashSet<string> PossibleDaysOld, out HashSet<string> PossibleDays)
+        public void GardenLogic(HashSet<int> Garden,int AnimalItems, HashSet<string> PossibleDaysOld, out HashSet<string> PossibleDays)
         {
             PossibleDays = PossibleDaysOld;
             if (AnimalItems > 3) return;
             bool skip = true;
             //iterate through possible day pairs, check to see if garden possible, for each if not remove it as possible
-            foreach (var DayPair in PossibleDaysOld)
-            {
-                int GardenItems = Utility.BundleIntersect(GardenItemsByPair[DayPair], Garden).Count;
-                if (GardenItems > GardenItemsByPair[DayPair].Count - 2) skip = false;
-                else PossibleDays.Remove(DayPair);
-            }
+            PossibleDays.RemoveWhere(DayPair => Utility.BundleIntersect(GardenItemsByPair[DayPair], Garden).Count - (GardenItemsByPair[DayPair].Count - 2) <= 0);
             if (skip) PossibleDays.Clear();
             return;
         }
@@ -189,7 +181,7 @@ namespace SeedFindingNET6
             //crops with early exit logic
             bool GiftPumk = !(Utility.BundleIntersect(ItemIdByBundle["SpCrops"], CartItems).Count == 3);
             LogicData.TrySetValue("GiftPumpkin",GiftPumk);
-            HashSet<string> Crops = new(); 
+            HashSet<string> Crops = new();
 
             bool SpCrops = CartItems.Contains(188) && (HasCarolineGift || !GiftPumk);
             if (SpCrops)
@@ -222,11 +214,11 @@ namespace SeedFindingNET6
                 LogicData.TrySetValue("SpFaCrops", true);
                 Crops.Add("SpFaCrops");
             }
-
             //gives us list of possible day combos
             CropLogic(Crops, offset,PossibleDays,out PossibleDays);
             int numDays = PossibleDays.Count;
             if (numDays == 0) return 0;
+            return LogicData.EncodeData;
 
             //garenteed fish bundles
             bool WT = Utility.BundleIntersect(ItemIdByBundle["WalleyeTiger"], CartItems).Count == 2;
@@ -282,12 +274,13 @@ namespace SeedFindingNET6
             ForageLogic("SpForage", CartItems,PossibleDays, LogicData, out LogicData,out PossibleDays);
             if (PossibleDays.Count == 0) return 0;
 
+            return LogicData.EncodeData;
             //variable bundles
             //garden
             HashSet<int> Garden = new();
             foreach (int item in ItemIdByBundle["Garden"]) if (CartItems.Contains(item))
                 {
-                    Garden.Add(item);
+                   Garden.Add(item);
                     LogicData.TrySetValue(string.Concat("Garden", item.ToString()), true);
                 }
             CartStock.TryGetValue(421, out int sunflower);
@@ -300,11 +293,11 @@ namespace SeedFindingNET6
             int GMilk = CartStock.TryGetValue(436, out int _GMilk) ? _GMilk : 0;
             int LGMilk = CartStock.TryGetValue(438, out int _LGMilk) ? _LGMilk : 0;
 
-            foreach (int count in new List<int> { LMilk, LGMilk }) AnimalItems += count > 0 ? 1 : 0;
-            LogicData.TrySetValue("Animal", AnimalItems > 3);
+           // foreach (int count in new List<int> { LMilk, LGMilk }) AnimalItems += count > 0 ? 1 : 0;
+            //LogicData.TrySetValue("Animal", AnimalItems > 3);
 
             //animal/garden early exit
-            GardenLogic(LogicData, Garden, AnimalItems, PossibleDays, out PossibleDays);
+            GardenLogic(Garden, AnimalItems, PossibleDays, out PossibleDays);
             if (PossibleDays.Count == 0) return 0;
 
             int TotalMilk = Milk + LMilk + GMilk + LGMilk;
@@ -317,6 +310,9 @@ namespace SeedFindingNET6
                 LogicData.TrySetValue("Sandfish", true);
                 LogicData.TrySetValue("PufferSand", CartItems.Contains(128));
             }
+            bool WoodSkip = CartItems.Contains(734); //another nautlius shell option via using beach farm
+            if (WoodSkip) LogicData.TrySetValue("WoodSkip", true);
+
             //master fish
             int MasterFish = Utility.BundleIntersect(ItemIdByBundle["MasterFish"], CartItems).Count;
             if (MasterFish > 0)
@@ -326,15 +322,15 @@ namespace SeedFindingNET6
             }
             LogicData.TrySetValue("Engineer", CartItems.Contains(787));
             //various bulliten board bundles and clashing bundles
-
+            return LogicData.EncodeData;
             //brewer,enchanter
             int BrewerItems = Utility.BundleIntersect(ItemIdByBundle["Brewer"], CartItems).Count;
             bool HasWine = CartStock.TryGetValue(348, out int Wine);
 
-            bool Enchanter = CartItems.Contains(446) && HasWine;
+            bool Enchanter = HasWine && CartItems.Contains(446);
             LogicData.TrySetValue("Enchanter", Enchanter);
 
-            bool Brewer = BrewerItems > 3 || BrewerItems == 3 && HasWine;
+            bool Brewer = BrewerItems > 3 || HasWine && BrewerItems == 3;
             LogicData.TrySetValue("Brewer", Brewer);
 
             LogicData.TrySetValue("EnchanterBrewer", Enchanter && Brewer && Wine > 1);
@@ -367,7 +363,7 @@ namespace SeedFindingNET6
             FodderBundle = FodderBundle && CartStock.TryGetValue(262, out value) && value == 10;
             if (FodderBundle) LogicData.TrySetValue("Fodder", true);
 
-            //research REDO, rename summer bits to relevent interaction bits
+            //research
             if (CartItems.Contains(392))
             {
                 LogicData.TrySetValue("Research", true); //nautilus in cart
@@ -393,14 +389,14 @@ namespace SeedFindingNET6
         public HashSet<string> EvaluatePairs(int seed)
         {
             var BaseCartStock = GetCartStock(seed);
-            var FodderBundle = BaseCartStock.TryGetValue(262, out int value) && value == 5;
+            var FodderBundle = BaseCartStock.TryGetValue(262, out var value) && value == 5;
             var HasCarolineGift = BaseCartStock.ContainsKey(276);
             var DemGiftItems = Utility.BundleIntersect(ItemIdByBundle["DemGiftItems"],new HashSet<int>(BaseCartStock.Keys));
             HashSet<string> Solns = new();
             for (int index = 0; index < Offsets.Count; index++)
             {
                 long PairValue = EvaluatePair(seed, Offsets[index],BaseCartStock,FodderBundle,HasCarolineGift,DemGiftItems);
-                if (PairValue > 0)
+                if (PairValue != 0)
                 {
                     Solns.Add(string.Concat(seed.ToString(), "-", index.ToString(), ":", PairValue.ToString()));
                 }
@@ -416,5 +412,13 @@ namespace SeedFindingNET6
             }
             return Solns;
         }
+        public int DoesCartHaveItems(HashSet<int> Items,int seed)
+        {
+            var CartStock = new HashSet<int> (GetCartStock(seed).Keys);
+            var Wanted = Utility.BundleIntersect(Items,CartStock);
+            if (Wanted.Count > 0) return seed;
+            return -1;
+        }
     }
+
 }
