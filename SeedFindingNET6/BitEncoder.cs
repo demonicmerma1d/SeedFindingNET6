@@ -17,7 +17,12 @@ namespace SeedFindingNET6
         }
         public BitEncoder(List<string> encodeOrder, long encodeData) //encoding
         {
-            EncodeOrder = encodeOrder.Zip(Enumerable.Range(0,encodeOrder.Count)).ToDictionary(x => x.First, x => x.Second); //zips up a provided list into dictionary for quicker ref to index
+            EncodeOrder = new Dictionary<string, int>();
+            for(int i = 0; i < encodeOrder.Count; i++)
+            {
+                EncodeOrder.Add(encodeOrder[i], i);
+            }
+            //EncodeOrder = encodeOrder.Zip(Enumerable.Range(0,encodeOrder.Count)).ToDictionary(x => x.First, x => x.Second); //zips up a provided list into dictionary for quicker ref to index
             EncodeData = encodeData;
         }
         private long Get(string data)
@@ -79,6 +84,15 @@ namespace SeedFindingNET6
             long CompareValue = 0;
             foreach (var data in set) CompareValue ^= 1 << EncodeOrder[data];
             return (EncodeData & CompareValue) != 0;
+        }
+
+        public BitEncoder Copy()
+        {
+            return new BitEncoder()
+            {
+                EncodeOrder = new Dictionary<string, int>(this.EncodeOrder),
+                EncodeData = this.EncodeData
+            };
         }
     }
 }

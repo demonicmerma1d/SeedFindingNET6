@@ -416,7 +416,8 @@ namespace SeedFindingNET6
         }
         public List<CompressedCartItem> GetStockCache(int seed, int day = 0)
         {
-            return MemoryCache.GetOrCreate(seed + day, () => GetStock(seed+day));
+            return GetStock(seed + day);
+            //return MemoryCache.GetOrCreate(seed + day, () => GetStock(seed+day));
         }
 
     }

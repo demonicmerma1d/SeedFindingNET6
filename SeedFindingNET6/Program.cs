@@ -11,16 +11,16 @@ namespace SeedFindingNET6
     class Program
     {
 
-        static double CartPairSearch(int numSeeds, int BlockSize)
+        static double CartPairSearch(int startSeed, int numSeeds, int BlockSize)
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
             var bag = new ConcurrentBag<string>();
-            var partitioner = Partitioner.Create(0, numSeeds, BlockSize); 
+            var partitioner = Partitioner.Create(startSeed, numSeeds, BlockSize); 
             Parallel.ForEach(partitioner, (range, loopState) =>
             {
                 CartPairs CartPair = new();
-                Console.WriteLine(stopwatch.Elapsed.TotalSeconds);
-                Console.WriteLine(range.Item1);
+                double startTime = stopwatch.Elapsed.TotalSeconds;
+                //Console.WriteLine($"{stopwatch.Elapsed.TotalSeconds}: {range.Item1} -> {range.Item2}");
                 for (int seed = range.Item1; seed < range.Item2; seed++)
                 {
                     var Solns = CartPair.EvaluatePairs(seed);
@@ -31,6 +31,8 @@ namespace SeedFindingNET6
                     }
                     //Console.WriteLine(seed);
                 }
+                double elapsed = stopwatch.Elapsed.TotalSeconds - startTime;
+                Console.WriteLine($"{elapsed}: {range.Item1} -> {range.Item2}");
             });
             double seconds = stopwatch.Elapsed.TotalSeconds;
             Console.WriteLine($"Found: {bag.Count} sols in {seconds:F2} s");
@@ -39,7 +41,7 @@ namespace SeedFindingNET6
             {
                 Console.WriteLine(item);
             }
-            using (StreamWriter file = new("2DayCC.txt", append: true))
+            using (StreamWriter file = new($"2DayCC_{startSeed}.txt", append: true))
             {
                 foreach (var item in items) file.WriteLine(item);
             }
@@ -70,7 +72,7 @@ namespace SeedFindingNET6
         }
         static void Main(string[] args)
         {
-            var seconds = CartPairSearch(1<<31, 125000);
+            var seconds = CartPairSearch(1<<21, 1<<16);
             Console.WriteLine(seconds);
             Console.ReadLine();
             using StreamWriter file = new("2DayCC.txt", append: true); file.WriteLine(seconds);
