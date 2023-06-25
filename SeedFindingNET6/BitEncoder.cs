@@ -27,16 +27,13 @@ namespace SeedFindingNET6
         }
         private void Set(string data, bool value)
         {
-            long dataValue = Get(data);
-            if (!(dataValue == 0 == value)) EncodeData ^= dataValue;
+            long dataValue = 1 << EncodeOrder[data];
+            if (value) EncodeData |= dataValue;
+            else EncodeData &= ~dataValue;
         }
         public void Clear()
         {
             EncodeData = 0;
-        }
-        public void Remove(string data)
-        {
-            if (EncodeOrder.ContainsKey(data)) Set(data, false);
         }
         public bool TryGetValue(string data, out bool outValue)
         {

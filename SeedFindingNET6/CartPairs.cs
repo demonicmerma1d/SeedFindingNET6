@@ -177,7 +177,7 @@ namespace SeedFindingNET6
 
             ForageLogic("WiForage", CartItems,PossibleDays, LogicData, out LogicData, out PossibleDays); //zero logicData if fail, check and exit
             if (PossibleDays.Count == 0) return 0;
-
+            
             //crops with early exit logic
             bool GiftPumk = !(Utility.BundleIntersect(ItemIdByBundle["SpCrops"], CartItems).Count == 3);
             LogicData.TrySetValue("GiftPumpkin",GiftPumk);
@@ -189,7 +189,7 @@ namespace SeedFindingNET6
                 LogicData.TrySetValue("SpCrops", true);
                 Crops.Add("SpCrops");
             }
-
+            
             if (Utility.BundleIntersect(ItemIdByBundle["SuCrops"], CartItems).Count == 4)
             {
                 LogicData.TrySetValue("SuCrops", true);
@@ -218,8 +218,7 @@ namespace SeedFindingNET6
             CropLogic(Crops, offset,PossibleDays,out PossibleDays);
             int numDays = PossibleDays.Count;
             if (numDays == 0) return 0;
-            return LogicData.EncodeData;
-
+            return LogicData.EncodeData; //reduced for quick search(since seems unlikely there is seed)
             //garenteed fish bundles
             bool WT = Utility.BundleIntersect(ItemIdByBundle["WalleyeTiger"], CartItems).Count == 2;
             bool Snapper = CartItems.Contains(150);
@@ -274,7 +273,7 @@ namespace SeedFindingNET6
             ForageLogic("SpForage", CartItems,PossibleDays, LogicData, out LogicData,out PossibleDays);
             if (PossibleDays.Count == 0) return 0;
 
-            return LogicData.EncodeData;
+            return LogicData.EncodeData; //reduced for testing
             //variable bundles
             //garden
             HashSet<int> Garden = new();
