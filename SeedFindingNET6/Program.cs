@@ -15,7 +15,7 @@ namespace SeedFindingNET6
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
             var bag = new ConcurrentBag<string>();
-            var partitioner = Partitioner.Create(0, numSeeds, BlockSize);
+            var partitioner = Partitioner.Create(0, numSeeds, BlockSize); 
             Parallel.ForEach(partitioner, (range, loopState) =>
             {
                 CartPairs CartPair = new();
@@ -70,7 +70,7 @@ namespace SeedFindingNET6
         }
         static void Main(string[] args)
         {
-            var seconds = CartPairSearch(1<<31 -1, 50000);
+            var seconds = CartPairSearch(1<<31, 125000);
             Console.WriteLine(seconds);
             Console.ReadLine();
             using StreamWriter file = new("2DayCC.txt", append: true); file.WriteLine(seconds);
