@@ -10,38 +10,71 @@ namespace SeedFindingNET6
 {
     class Program
     {
-        //redo all this to have a wrapper fn for CartPairs, and then have use a threadpool which adds the outputs to the queue to write to file
-        private BlockingCollection<string> OutSolnsQueue = new();
-        static bool IsWriting = false;
-        public void SeedSearch(int MinSeed)
+
+        static double CartPairSearch(int numSeeds, int BlockSize)
         {
-            int MaxSeed = MinSeed + 10000; //hardcoding the interval
-            CartPairs cartPairs = new(); //create instance of CartPairs
-            var Solns = cartPairs.SeedRange(MinSeed, Math.Min(MaxSeed,int.MaxValue));
-            foreach (var Soln in Solns) OutSolnsQueue.Add(Soln);
-        }
-        
-        public void WriteOutput()
-        {
-            if (IsWriting) return;
-            IsWriting = true; //blocks multiple writing tasks from happening simultaniously
-            string filename = "2DayCC.txt";
-            using (StreamWriter file = new(filename, append: true))
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            var bag = new ConcurrentBag<string>();
+            var partitioner = Partitioner.Create(0, numSeeds, BlockSize);
+            Parallel.ForEach(partitioner, (range, loopState) =>
             {
-                foreach (var Soln in OutSolnsQueue.GetConsumingEnumerable()) file.WriteLine(Soln);
+                CartPairs CartPair = new();
+                Console.WriteLine(stopwatch.Elapsed.TotalSeconds);
+                Console.WriteLine(range.Item1);
+                for (int seed = range.Item1; seed < range.Item2; seed++)
+                {
+                    var Solns = CartPair.EvaluatePairs(seed);
+                    foreach (string soln in Solns)
+                    {
+                        bag.Add(soln);
+                        Console.WriteLine(soln);
+                    }
+                    //Console.WriteLine(seed);
+                }
+            });
+            double seconds = stopwatch.Elapsed.TotalSeconds;
+            Console.WriteLine($"Found: {bag.Count} sols in {seconds:F2} s");
+            var items = bag.ToList();
+            foreach (var item in items)
+            {
+                Console.WriteLine(item);
             }
-            IsWriting = false;
+            using (StreamWriter file = new("2DayCC.txt", append: true))
+            {
+                foreach (var item in items) file.WriteLine(item);
+            }
+            return seconds;
+        }
+        static void HasItemSearch(int MinSeed, int MaxSeed,int BlockSize)
+        {
+            HashSet<int> Items = new()
+            {
+                283,416,418
+            };
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            CartPairs cartPairs = new();
+            var bag = new ConcurrentBag<int>();
+            var partitioner = Partitioner.Create(MinSeed, MaxSeed,BlockSize);
+            Parallel.ForEach(partitioner, (range, loopState) =>
+            {
+                for (int seed = range.Item1;seed < range.Item2; seed++)
+                {
+                    int toAdd = cartPairs.DoesCartHaveItems(Items, seed);
+                    if (toAdd > 0) bag.Add(toAdd);
+                }
+            });
+            double seconds = stopwatch.Elapsed.TotalSeconds;
+            Console.WriteLine("End");
+            foreach (var item in bag) Console.WriteLine(item);
+            Console.WriteLine(seconds.ToString());
         }
         static void Main(string[] args)
         {
-
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            var PG = new Program();
-            for (int i = 0; i < 100;  i++) //214000 covers entire seedspace
-            {
-                ThreadPool.QueueUserWorkItem((MinSeed) => PG.SeedSearch((int)MinSeed));
-                if (i % 10 == 0 && i > 0) ThreadPool.QueueUserWorkItem(WriteOutput);
-            }
+            var seconds = CartPairSearch(1<<31 -1, 50000);
+            Console.WriteLine(seconds);
+            Console.ReadLine();
+            using StreamWriter file = new("2DayCC.txt", append: true); file.WriteLine(seconds);
+            //HasItemSearch(0, 1<<31 -1, 20000);
         }
     }
 }

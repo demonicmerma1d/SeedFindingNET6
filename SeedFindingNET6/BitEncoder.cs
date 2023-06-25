@@ -68,7 +68,7 @@ namespace SeedFindingNET6
         }
         public bool ContainsInverse(long CompareData)
         {
-            long dataValue = EncodeData & (CompareData ^ 0);
+            long dataValue = EncodeData & ~ CompareData;
             return (dataValue ^ CompareData) == long.MaxValue;
         }
         public bool ContainsInverse(HashSet<string> set)
