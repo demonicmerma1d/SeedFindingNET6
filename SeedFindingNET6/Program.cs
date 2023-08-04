@@ -72,7 +72,7 @@ namespace SeedFindingNET6
         }
         static void Main(string[] args)
         {
-            var seconds = CartPairSearch(1<<21, 1<<16);
+            var seconds = CartPairSearch(0,1<<21, 1<<16);
             Console.WriteLine(seconds);
             Console.ReadLine();
             using StreamWriter file = new("2DayCC.txt", append: true); file.WriteLine(seconds);
